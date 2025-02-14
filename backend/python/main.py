@@ -26,8 +26,22 @@ CONTRACT_ABI = [
     },
     {
         "inputs": [],
-        "name": "getMessage",
+        "name": "getLastMessage",
         "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "getAllMessages",
+        "outputs": [{"internalType": "string[]", "name": "", "type": "string[]"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "getMessageCount",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
         "stateMutability": "view",
         "type": "function",
     },
@@ -47,11 +61,35 @@ wallet_address = account.address
 def home():
     return {"message": "Web3 + FastAPI API is running!"}
 
-@app.get("/get-message")
-def get_message():
+# @app.get("/get-message")
+# def get_message():
+#     try:
+#         message = contract.functions.getMessage().call()
+#         return {"message": message}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get-last-message")
+def get_last_message():
     try:
-        message = contract.functions.getMessage().call()
-        return {"message": message}
+        message = contract.functions.getLastMessage().call()
+        return {"last_message": message}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get-all-messages")
+def get_all_messages():
+    try:
+        messages = contract.functions.getAllMessages().call()
+        return {"messages": messages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/get-message-count")
+def get_message_count():
+    try:
+        count = contract.functions.getMessageCount().call()
+        return {"message_count": count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
