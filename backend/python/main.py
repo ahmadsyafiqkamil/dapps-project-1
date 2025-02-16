@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from web3 import Web3
 import os
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -52,6 +54,14 @@ contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 # FastAPI app
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # URL Next.js
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Wallet address
 account = w3.eth.account.from_key(PRIVATE_KEY)
@@ -92,10 +102,14 @@ def get_message_count():
         return {"message_count": count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+class MessageRequest(BaseModel):
+    new_message: str
 
 @app.post("/set-message")
-def set_message(new_message: str):
+def set_message(request: MessageRequest):
     try:
+        new_message = request.new_message  # Ambil nilai dari JSON
         # Create transaction
         nonce = w3.eth.get_transaction_count(wallet_address)
         transaction = contract.functions.setMessage(new_message).build_transaction({
