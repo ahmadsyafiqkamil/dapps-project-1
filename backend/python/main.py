@@ -82,14 +82,26 @@ def home():
 @app.get("/get-last-message")
 def get_last_message():
     try:
+        # Periksa jumlah pesan
+        message_count = contract.functions.getMessageCount().call()
+        if message_count == 0:
+            return {"last_message": "0"}  # Jika tidak ada data, kirim "0"
+        
+        # Ambil pesan terakhir
         message = contract.functions.getLastMessage().call()
         return {"last_message": message}
     except Exception as e:
+        print("Error fetching the last message:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/get-all-messages")
 def get_all_messages():
     try:
+        message_count = contract.functions.getMessageCount().call()
+        if message_count == 0:
+            return {"messages": "0"}  # Jika tidak ada data, kirim "0
+
         messages = contract.functions.getAllMessages().call()
         return {"messages": messages}
     except Exception as e:

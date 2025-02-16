@@ -15,17 +15,35 @@ export default function Home() {
   const fetchLastMessage = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/get-last-message`);
-      setLastMessage(response.data.last_message);
+      const message = response.data.last_message;
+  
+      // Jika "0", tampilkan pesan default
+      if (message === "0") {
+        setLastMessage("No messages available");
+      } else {
+        setLastMessage(message);
+      }
     } catch (error) {
       console.error("Error fetching the last message:", error);
+      setLastMessage("Error fetching data");
     }
   };
+  
 
   // Fetch all messages
   const fetchAllMessages = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/get-all-messages`);
-      setAllMessages(response.data.messages);
+      const message = response.data.messages;
+
+      if(message === "0"){
+        // setAllMessages("No messages available");
+        console.log("no messages")
+      }else{
+        setAllMessages(response.data.messages);
+      }
+
+      
     } catch (error) {
       console.error("Error fetching all messages:", error);
     }
