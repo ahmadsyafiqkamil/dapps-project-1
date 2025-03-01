@@ -62,7 +62,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Wallet address
 account = w3.eth.account.from_key(PRIVATE_KEY)
 wallet_address = account.address
@@ -70,14 +69,6 @@ wallet_address = account.address
 @app.get("/")
 def home():
     return {"message": "Web3 + FastAPI API is running!"}
-
-# @app.get("/get-message")
-# def get_message():
-#     try:
-#         message = contract.functions.getMessage().call()
-#         return {"message": message}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/get-last-message")
 def get_last_message():
