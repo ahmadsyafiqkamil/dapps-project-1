@@ -67,13 +67,16 @@ app.add_middleware(
 account = w3.eth.account.from_key(PRIVATE_KEY)
 wallet_address = account.address
 
-@app.get("/")
-def home():
-    return {"message": "Web3 + FastAPI API is running!"}
-
 class AuthRequest(BaseModel):
     signature: str
     address: str
+
+class MessageRequest(BaseModel):
+    new_message: str
+
+@app.get("/")
+def home():
+    return {"message": "Web3 + FastAPI API is running!"}
 
 @app.post("/authenticate")
 def authenticate(request: AuthRequest):
@@ -82,6 +85,8 @@ def authenticate(request: AuthRequest):
         message_hash = encode_defunct(text=message)
 
         recovered_address = w3.eth.account.recover_message(message_hash, signature=request.signature)
+        # print(request.address)
+        # print(request.signature)
 
         if recovered_address.lower() == request.address.lower():
             return {"status": "success", "message": "Authentication successful"}
@@ -126,8 +131,6 @@ def get_message_count():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-class MessageRequest(BaseModel):
-    new_message: str
 
 @app.post("/set-message")
 def set_message(request: MessageRequest):

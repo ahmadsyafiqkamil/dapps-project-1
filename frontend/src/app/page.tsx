@@ -9,7 +9,7 @@ export default function Home() {
   const [lastMessage, setLastMessage] = useState("");
   const [allMessages, setAllMessages] = useState([]);
   const [messageCount, setMessageCount] = useState(0);
-  const [walletAddress, setWalletAddress] = useState("");
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   const API_BASE_URL = "http://127.0.0.1:8000"; // Ganti dengan URL backend FastAPI
 
@@ -95,12 +95,13 @@ export default function Home() {
       const signature = await signer.signMessage(message);
   
       const response = await axios.post(`${API_BASE_URL}/authenticate`, {
-        signature: signature,  // JSON key harus sesuai dengan model di FastAPI
+        signature: signature, 
         address: address,
       });
   
       if (response.data.status === "success") {
         setWalletAddress(address);
+        localStorage.setItem("walletAddress", address);
         alert("Authentication successful!");
       } else {
         alert("Authentication failed!");
@@ -110,6 +111,12 @@ export default function Home() {
       alert("Authentication failed!");
     }
   };
+
+  const logout = () =>{
+    localStorage.removeItem("walletAddress");
+    setWalletAddress(null);
+    alert("Logged out successfully")
+  }
   
   
 
@@ -117,6 +124,10 @@ export default function Home() {
     fetchLastMessage();
     fetchAllMessages();
     fetchMessageCount();
+    const savedAddress = localStorage.getItem("walletAddress");
+    if(savedAddress){
+      setWalletAddress(savedAddress);
+    }
   }, []);
 
   return (
@@ -125,7 +136,15 @@ export default function Home() {
 
       <div className="mb-4">
         {walletAddress ? (
+          <div>
           <p className="text-green-600">Connected: {walletAddress}</p>
+          <button
+            onClick={logout}
+            className="bg-red-500 text-white px-4 py-2 rounded mt-2"
+          >
+            Logout
+          </button>
+        </div>
         ) : (
           <button onClick={authenticateUser} className="bg-green-500 text-white px-4 py-2 rounded">
             Login with MetaMask
