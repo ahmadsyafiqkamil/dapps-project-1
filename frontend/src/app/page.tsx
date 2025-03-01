@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import axios from "axios";
 
 export default function Home() {
@@ -8,42 +9,44 @@ export default function Home() {
   const [lastMessage, setLastMessage] = useState("");
   const [allMessages, setAllMessages] = useState([]);
   const [messageCount, setMessageCount] = useState(0);
+  const [walletAddress, setWalletAddress] = useState("");
 
-  const API_BASE_URL = "http://127.0.0.1:8000"; // Replace with your FastAPI backend URL
+  const API_BASE_URL = "http://127.0.0.1:8000"; // Ganti dengan URL backend FastAPI
+
+  // Fungsi untuk login dengan MetaMask
+  const connectMetaMask = async () => {
+    if (window.ethereum) {
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        setWalletAddress(address);
+        console.log("Connected address:", address);
+      } catch (error) {
+        console.error("User denied account access or error occurred:", error);
+      }
+    } else {
+      alert("MetaMask is not installed!");
+    }
+  };
 
   // Fetch the last message
   const fetchLastMessage = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/get-last-message`);
       const message = response.data.last_message;
-  
-      // Jika "0", tampilkan pesan default
-      if (message === "0") {
-        setLastMessage("No messages available");
-      } else {
-        setLastMessage(message);
-      }
+      setLastMessage(message === "0" ? "No messages available" : message);
     } catch (error) {
       console.error("Error fetching the last message:", error);
       setLastMessage("Error fetching data");
     }
   };
-  
 
   // Fetch all messages
   const fetchAllMessages = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/get-all-messages`);
-      const message = response.data.messages;
-
-      if(message === "0"){
-        // setAllMessages("No messages available");
-        console.log("no messages")
-      }else{
-        setAllMessages(response.data.messages);
-      }
-
-      
+      setAllMessages(response.data.messages !== "0" ? response.data.messages : []);
     } catch (error) {
       console.error("Error fetching all messages:", error);
     }
@@ -61,11 +64,12 @@ export default function Home() {
 
   // Send a new message
   const sendMessage = async () => {
+    if (!walletAddress) {
+      alert("Please connect your MetaMask wallet first.");
+      return;
+    }
+
     try {
-      // Log URL dan data yang akan dikirim
-      console.log("URL:", `${API_BASE_URL}/set-message`);
-      console.log("Data yang dikirim:", { new_message: newMessage });
-  
       await axios.post(`${API_BASE_URL}/set-message`, { new_message: newMessage });
       setNewMessage("");
       fetchLastMessage();
@@ -75,6 +79,38 @@ export default function Home() {
       console.error("Error sending message:", error);
     }
   };
+
+  const authenticateUser = async () => {
+    if (!window.ethereum) {
+      alert("MetaMask not installed!");
+      return;
+    }
+  
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+  
+      const message = "Login to Web3 Messaging DApp";
+      const signature = await signer.signMessage(message);
+  
+      const response = await axios.post(`${API_BASE_URL}/authenticate`, {
+        signature: signature,  // JSON key harus sesuai dengan model di FastAPI
+        address: address,
+      });
+  
+      if (response.data.status === "success") {
+        setWalletAddress(address);
+        alert("Authentication successful!");
+      } else {
+        alert("Authentication failed!");
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      alert("Authentication failed!");
+    }
+  };
+  
   
 
   useEffect(() => {
@@ -86,6 +122,16 @@ export default function Home() {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Web3 Messaging DApp</h1>
+
+      <div className="mb-4">
+        {walletAddress ? (
+          <p className="text-green-600">Connected: {walletAddress}</p>
+        ) : (
+          <button onClick={authenticateUser} className="bg-green-500 text-white px-4 py-2 rounded">
+            Login with MetaMask
+          </button>
+        )}
+      </div>
 
       <div className="mb-6">
         <input

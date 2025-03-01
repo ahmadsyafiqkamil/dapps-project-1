@@ -1,9 +1,10 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from web3 import Web3
-import os
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from eth_account.messages import encode_defunct
 
 # Load environment variables
 load_dotenv()
@@ -69,6 +70,25 @@ wallet_address = account.address
 @app.get("/")
 def home():
     return {"message": "Web3 + FastAPI API is running!"}
+
+class AuthRequest(BaseModel):
+    signature: str
+    address: str
+
+@app.post("/authenticate")
+def authenticate(request: AuthRequest):
+    try:
+        message = "Login to Web3 Messaging DApp"
+        message_hash = encode_defunct(text=message)
+
+        recovered_address = w3.eth.account.recover_message(message_hash, signature=request.signature)
+
+        if recovered_address.lower() == request.address.lower():
+            return {"status": "success", "message": "Authentication successful"}
+        else:
+            raise HTTPException(status_code=400, detail="Signature verification failed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/get-last-message")
 def get_last_message():
